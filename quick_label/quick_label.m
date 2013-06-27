@@ -11,8 +11,8 @@ function lab_vol = quick_label(invol)
 % anterior->superior (foot->head) be increasing slice number
 % get dimensions correct
 % 
-% If you pass a regular matlab matrix, it assumes that x,y,z are left-right,up-down
-%     and slice dimensions, respectively.
+% If you pass a regular matlab matrix, it assumes that x,y,z are 
+%     left-right, up-down and slice dimensions, respectively.
 % 
 % Instructions for use:
 % GUI will pop up. 
@@ -21,17 +21,18 @@ function lab_vol = quick_label(invol)
 % Continue for the rest of the anatomy. 
 % When you've enclosed the anatomy completely (100% enclosed)
 %     hit the Logisticize Me! button. 
-%     We then try to classify the image based on the information you provided. 
+%     We then try to classify the image based on the information you provided.
 % If you are happy with this classification, hit Finish! to return the logical 
 %     variable lab_vol to the matlab workspace. 
 % If not, modify the image by:
-%     1. Clipping of stuff that shouldn't be included: start outside the included 
-%        area and end outside.
-%     2. Including stuff that should be included: Start inside the included area 
-%        and end inside. 
-%     Edge-cases: If a slice is totally wrong, "Redo-Slice" to draw a new polygon.
+%     1. Clipping of stuff that shouldn't be included: start outside the  
+%        included area and end outside.
+%     2. Including stuff that should be included: Start inside the included
+%        area and end inside. 
+%     Edge-cases: If a slice is totally wrong, "Redo-Slice" to draw a new 
+%        polygon,
 %     
-% At any point, you can hit 3D render and see a 3D rendering of the current 
+% At any point, you can hit 3D render and see a 3D rendering of the current
 %     segmentation in a new figure window.
 %     
 % Notes:
@@ -49,6 +50,7 @@ if isa(invol,'char')
         return;
     end
     invol = vol.img; 
+    wasnifty = 1;
 end
 
 if isnumeric(invol)  % a matrix
@@ -61,11 +63,50 @@ else
     return;
 end
 
+% pre-processing
+invol = img_normalize(invol); 
+
 keyboard;
 
-mid = ceil(size(invol,3)/2);
-top = size(invol,3);
-step = [1, 1] / (top - 1);
+% prepare to plot
 
-h = figure; 
+% step = [1, 1] / (top - 1);
+% fix image dimensions if information is available.
+if wasnifty; 
+    pixdim = vol.struct.hdr.dime.pixdim(2:4);
+    % flip flop dimensions until happy
+    invol = flipdim(permute(invol,[2 1 3]),1); 
+    pixdim = pixdim([2 1 3]);
+else
+    pixdim = [1 1 1];
+end
+axial_aspect = pixdim.^-1;
+
+% bring up the GUIDE gui
+mask = labelbox(invol,axial_aspect);
+
+end
+
+
+function out =img_normalize(in)
+
+% cast to double
+in = double(in);
+
+% saturate btwen .5 and 99.5 percentile
+lowval = prctile(in(:), .5);
+highval = prctile(in(:), 99.5);
+out = in;
+out(in<lowval) = lowval;
+out(in>highval) = highval;
+
+% scale to one;
+out = (out-lowval)/(highval-lowval);
+
+end
+
+
+
+
+
 
