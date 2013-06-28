@@ -1,4 +1,4 @@
-function lab_vol = quick_label(invol)
+function mask = quick_label(invol)
 % label_volume = QUICK_LABEL(intensity_vol)
 % -or-
 % label_volume_filename.nii.gz = QUICK_LABEL(input_file.nii/.nii.gz)
@@ -66,14 +66,10 @@ end
 % pre-processing
 invol = img_normalize(invol); 
 
-keyboard;
-
 % prepare to plot
-
-% step = [1, 1] / (top - 1);
 % fix image dimensions if information is available.
 if wasnifty; 
-    pixdim = vol.struct.hdr.dime.pixdim(2:4);
+    pixdim = vol.hdr.dime.pixdim(2:4);
     % flip flop dimensions until happy
     invol = flipdim(permute(invol,[2 1 3]),1); 
     pixdim = pixdim([2 1 3]);
@@ -82,11 +78,19 @@ else
 end
 axial_aspect = pixdim.^-1;
 
-% bring up the GUIDE gui
+% handle/catch ctrl-c so the GUIDE window closes even in that case
+cleanupObj = onCleanup(@()closereq);
+keyboard;
+
+% bring up the GUIDE gui - may error
 mask = labelbox(invol,axial_aspect);
 
+% rechange data if was nifty, 
+if wasnifty;
+    mask = permute(flipdim(mask,1), [2 1 3]);
 end
 
+end
 
 function out =img_normalize(in)
 

@@ -43,16 +43,28 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-
 % --- Executes just before labelbox is made visible.
-function labelbox_OpeningFcn(hObject, eventdata, handles, varargin)
+function labelbox_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to labelbox (see VARARGIN)
 
+% change what clicking "x" does.
+% it now calls the imdone_Callback function
+set(handles.figure1,'CloseRequestFcn',@(hObject,eventdata)labelbox(...
+    'xbutton_Callback',hObject,eventdata,guidata(hObject)))
+
+% change window name from "labelbox" 
+set(handles.figure1,'Name','Awesome box!');
+
 % get data from command line and put in handles structure
+if isempty(varargin); 
+    varargin{1} = padarray(zeros([64 64]),[0 0 1],1);
+    varargin{2} = [1 1 1];
+end
+    
 handles.im = varargin{1};
 handles.mid = ceil(size(handles.im,3)/2);
 handles.top = size(handles.im,3);
@@ -64,6 +76,8 @@ handles.mask = false(size(handles.im));
 
 % Update handles structure
 guidata(hObject, handles);
+
+% plot stuff
 axes(handles.axes1); 
     imshow(handles.im(:,:,handles.currsl)); daspect(handles.ax_pixdim); axis off; 
 set(handles.slicefield,'String', ...
@@ -77,21 +91,21 @@ set(handles.slider1,'Min',1,'Max',handles.top,'SliderStep',step,...
 % UIWAIT makes labelbox wait for user response (see UIRESUME)
 uiwait(handles.figure1);
 
-
-
 % --- Outputs from this function are returned to the command line.
-function varargout = labelbox_OutputFcn(hObject, eventdata, handles) 
+function varargout = labelbox_OutputFcn(~, ~, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-keyboard;
-% Get default command line output from handles structure
-varargout{1} = handles.mask;
 
+% Get default command line output from handles structure
+if isempty(handles); varargout{1} = 'empty';
+else varargout{1} = handles.mask;
+end
+closereq;
 
 % --- Executes on button press in sliceup.
-function sliceup_Callback(hObject, eventdata, handles)
+function sliceup_Callback(hObject, ~, handles)
 % hObject    handle to sliceup (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -110,7 +124,7 @@ else
 end
 
 % --- Executes on button press in slicedown.
-function slicedown_Callback(hObject, eventdata, handles)
+function slicedown_Callback(hObject, ~, handles)
 % hObject    handle to slicedown (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -129,7 +143,7 @@ else
 end
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
+function slider1_Callback(hObject, ~, handles)
 % hObject    handle to slider1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -141,35 +155,56 @@ set(handles.slicefield,'String', ...
     sprintf('%3i / %3i',handles.currsl,handles.top));
 guidata(hObject, handles);
 
-
 % --- Executes on button press in clearslice.
-function clearslice_Callback(hObject, eventdata, handles)
+function clearslice_Callback(~, ~, ~)
 % hObject    handle to clearslice (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 disp('pushbutton3 pressed');
 
-
 % --- Executes on button press in imdone.
-function imdone_Callback(hObject, eventdata, handles)
+function imdone_Callback(~, ~, handles) %#ok<*DEFNU>
 % hObject    handle to imdone (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 disp('imdone pressed')
-uiresume; % activates labelbox_OutputFcn
+if ~isequal(zeros(size(handles.mask)),handles.mask)
+    g = questdlg('You have entered data on the mask. Ready to close?',...
+        'Close','YES','NO','NO');
+    if strcmp(g,'YES')
+        uiresume; % activates labelbox_OutputFcn
+    else
+        %nothing
+    end
+else
+    uiresume; % activates labelbox_OutputFcn
+end
 
+% --- Executes on x button (close) press.
+function xbutton_Callback(~, ~, ~) 
+% hObject    handle to imdone (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+disp('xbutton pressed')
+g = questdlg(sprintf('Ready to close?\nEntered data will be lost'),...
+    'Close','YES','NO','NO');
+if strcmp(g,'YES')
+    closereq;
+    return; % 
+else
+    %nothing
+end
 
 % --- Executes on button press in logisticizeme.
-function logisticizeme_Callback(hObject, eventdata, handles)
+function logisticizeme_Callback(~, ~, ~)
 % hObject    handle to logisticizeme (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 disp('logisticizeme_Callback pressed');
 
 
-
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
+function slider1_CreateFcn(hObject, ~, ~)
 % hObject    handle to slider1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
