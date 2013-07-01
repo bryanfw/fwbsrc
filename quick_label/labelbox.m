@@ -22,7 +22,7 @@ function varargout = labelbox(varargin)
 
 % Edit the above text to modify the response to help labelbox
 
-% Last Modified by GUIDE v2.5 27-Jun-2013 16:48:21
+% Last Modified by GUIDE v2.5 01-Jul-2013 10:04:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -60,11 +60,12 @@ set(handles.figure1,'CloseRequestFcn',@(hObject,eventdata)labelbox(...
 set(handles.figure1,'Name','Awesome box!');
 
 % get data from command line and put in handles structure
+% this if statement only occurs if you call labelbox w/ no args.
 if isempty(varargin); 
-    varargin{1} = padarray(zeros([64 64]),[0 0 1],1);
+    varargin{1} = rand(100,100,5);
     varargin{2} = [1 1 1];
+    warning('labelbox called with no args. dummy.')
 end
-    
 handles.im = varargin{1};
 handles.mid = ceil(size(handles.im,3)/2);
 handles.top = size(handles.im,3);
@@ -73,9 +74,6 @@ handles.currsl = handles.mid;
 
 % Choose default command line output for labelbox
 handles.mask = false(size(handles.im));
-
-% Update handles structure
-guidata(hObject, handles);
 
 % plot stuff
 axes(handles.axes1); 
@@ -87,6 +85,9 @@ set(handles.slicefield,'String', ...
 step = [1, 1] / (handles.top - 1);
 set(handles.slider1,'Min',1,'Max',handles.top,'SliderStep',step,...
     'Value',handles.currsl);
+
+% Update handles structure
+guidata(hObject, handles);
 
 % UIWAIT makes labelbox wait for user response (see UIRESUME)
 uiwait(handles.figure1);
@@ -109,13 +110,14 @@ function sliceup_Callback(hObject, ~, handles)
 % hObject    handle to sliceup (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% keyboard; 
 if handles.currsl<handles.top
-    % redraw & increment & update
+    % increment, redraw & update
+    handles.currsl = handles.currsl+1;
     axes(handles.axes1); 
         imshow(handles.im(:,:,handles.currsl)); 
         daspect(handles.ax_pixdim); axis off;
-    handles.currsl = handles.currsl+1; 
-    set(handles.slicefield,'String', ...
+     set(handles.slicefield,'String', ...
         sprintf('%3i / %3i',handles.currsl,handles.top));
     set(handles.slider1,'Value',handles.currsl);
     guidata(hObject, handles);
@@ -130,13 +132,13 @@ function slicedown_Callback(hObject, ~, handles)
 % handles    structure with handles and user data (see GUIDATA)
 if handles.currsl>1
     % redraw & increment & update
+    handles.currsl = handles.currsl-1;
+    set(handles.slider1,'Value',handles.currsl-1);
     axes(handles.axes1); 
         imshow(handles.im(:,:,handles.currsl)); 
         daspect(handles.ax_pixdim); axis off;
-    handles.currsl = handles.currsl-1; 
     set(handles.slicefield,'String', ...
         sprintf('%3i / %3i',handles.currsl,handles.top));
-    set(handles.slider1,'Value',handles.currsl);
     guidata(hObject, handles);
 else
     fprintf('\nBOTTOM OF IMAGE. NO MORE DOWNY FOR YOU!');
