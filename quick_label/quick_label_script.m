@@ -1,11 +1,14 @@
 % find(obs.havetruth==3,1)
 ind = 1; %
 
+
+% 
+% file = '~/Code/fwbsrc/quick_label/sample_data/p10s2_rawimg.nii.gz';% home
 file = obs.intensity{ind};
 
 % out = quick_label(file);
 
-%% TESTING
+%% TESTING - coomment out later
 % get some testing data in
 
 vol = load_nii_gz(file);
@@ -31,3 +34,7 @@ axial_aspect = pixdim.^-1;
 
 % other stuff 
 I = imread('eight.tif');
+
+%% real work
+% out = quick_label(file);
+
