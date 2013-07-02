@@ -80,7 +80,6 @@ axial_aspect = pixdim.^-1;
 
 % handle/catch ctrl-c so the GUIDE window closes even in that case
 cleanupObj = onCleanup(@()closereq);
-keyboard;
 
 % bring up the GUIDE gui - may error
 mask = labelbox(invol,axial_aspect);
