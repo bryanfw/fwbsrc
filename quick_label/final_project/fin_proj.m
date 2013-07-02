@@ -1,13 +1,13 @@
 % simulation example - to get the robustness thing to work
 
 % 2 Distributions: 2-dimensional multi-variate guassian 
-mu1 = [100 5 ];
-var1 = [100 2 ];
+mu1 = [10 16 ];
+var1 = [100 150 ];
 corr1 = rand(2); corr1 = triu(corr1) + triu(corr1)'; corr1(logical(diag(ones(2,1)))) = ones(2,1); % a valid random corr matrix
 sig1 = sqrt(var1)'* sqrt(var1) .* corr1;
 
-mu2 = [50 2];
-var2 = [60 1];
+mu2 = [-10 2];
+var2 = [60 59];
 corr2 = rand(2); corr2 = triu(corr2) + triu(corr2)'; corr2(logical(diag(ones(2,1)))) = ones(2,1); % a valid random corr matrix
 sig2 = sqrt(var2)'* sqrt(var2) .* corr2;
 
@@ -59,19 +59,22 @@ while (abs(old_g00 - g00) > .001 && iter < max_its)
     g11 = sum(Yhat >= .5 & Y2==1)/sum(Yhat>.5); g10 = 1-g11; 
     [Bhat3_3, ML2_3] = fminsearch(@loglikelihood, [0 0 0]', optimset('TolFun', 0.0001), Y2, X, 1, g00, g11); % once and then iterate
 end
+iter = iter+1;
+fprintf('\n %u. g00 = %.3f \t g11 = %.3f ', iter, g00, g11);
 fprintf('\n');
+
 
 
 % print results
 fprintf('\nUSING GOOD DATA');
-fprintf('\nBhat using "logistic" = '); fprintf('%4.2f\t',Bhat1_1); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat1_1(2)/Bhat1_1(3),Bhat1_1(1)/Bhat1_1(3));
-fprintf('\nBhat using "glmfit"   = '); fprintf('%4.2f\t',Bhat1_2); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat1_2(2)/Bhat1_2(3),Bhat1_2(1)/Bhat1_2(3));
+fprintf('\nBhat using "logistic"     = '); fprintf('%4.2f\t',Bhat1_1); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat1_1(2)/Bhat1_1(3),Bhat1_1(1)/Bhat1_1(3));
+fprintf('\nBhat using "glmfit"       = '); fprintf('%4.2f\t',Bhat1_2); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat1_2(2)/Bhat1_2(3),Bhat1_2(1)/Bhat1_2(3));
 fprintf('\nBhat using "fminsearch"   = '); fprintf('%4.2f\t',Bhat1_3); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat1_3(2)/Bhat1_3(3),Bhat1_3(1)/Bhat1_3(3));
 fprintf('\n');
 % 
 fprintf('\nUSING DATA WITH HIGH FALSE POS RATE');
-fprintf('\nBhat using "logistic" = '); fprintf('%4.2f\t',Bhat2_1); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat2_1(2)/Bhat2_1(3),Bhat2_1(1)/Bhat2_1(3));
-fprintf('\nBhat using "glmfit"   = '); fprintf('%4.2f\t',Bhat2_2); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat2_2(2)/Bhat2_2(3),Bhat2_2(1)/Bhat2_2(3));
+fprintf('\nBhat using "logistic"     = '); fprintf('%4.2f\t',Bhat2_1); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat2_1(2)/Bhat2_1(3),Bhat2_1(1)/Bhat2_1(3));
+fprintf('\nBhat using "glmfit"       = '); fprintf('%4.2f\t',Bhat2_2); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat2_2(2)/Bhat2_2(3),Bhat2_2(1)/Bhat2_2(3));
 fprintf('\nBhat using "fminsearch"   = '); fprintf('%4.2f\t',Bhat2_3); fprintf('B2/B3 = %4.2f, B1/B3 = %4.2f', Bhat2_3(2)/Bhat2_3(3),Bhat2_3(1)/Bhat2_3(3));
 fprintf('\n');
 % 
