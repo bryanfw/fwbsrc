@@ -1,0 +1,190 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf400
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red28\green0\blue207;\red170\green13\blue145;}
+\margl1440\margr1440\vieww24340\viewh19600\viewkind0
+\deftab529
+\pard\tx529\pardeftab529\pardirnatural
+
+\f0\fs22 \cf0 \CocoaLigature0 %generate the phase correction matrix\
+function [PCM] = calc_epi_phase_corr(phc,Nepi,ph_cart_locs,cart_locs,kflag)\
+    \
+    PCM = zeros(size(phc,\cf2 2\cf0 ),length(cart_locs));\
+    \cf3 if\cf0  \cf2 1\cf0  % using Philips linear phase estimation logic\
+        s1 = size(phc,\cf2 1\cf0 );\
+        s2 = size(phc,\cf2 2\cf0 );\
+        s2_odd = ceil(s2/\cf2 2\cf0 );\
+        s2_even = floor(s2/\cf2 2\cf0 );\
+        ham = repmat(hamming(s1),[\cf2 1\cf0  s2]);\
+        Q = ifftshift(fft(fftshift(phc,\cf2 1\cf0 ),[],\cf2 1\cf0 ),\cf2 1\cf0 );\
+%         Q = phc;\
+        Q = Q .* ham;\
+        q = fftshift(ifft(ifftshift(Q,\cf2 1\cf0 ),[],\cf2 1\cf0 ),\cf2 1\cf0 );\
+        P1 = q(:,\cf2 1\cf0 );\
+        P2 = q(:,\cf2 2\cf0 );\
+        P3 = q(:,\cf2 3\cf0 );\
+        Pdelta1 = conj(P1) .* P2;\
+        Pdelta2 = conj(P3) .* P2;\
+        Padd = Pdelta1 .* Pdelta2;\
+        Padd = Padd ./ (abs(P1) .* abs(P2) .* abs(P3));\
+        Padd = Padd ./ max(abs(Padd));\
+        idx = find(abs(Padd) > \cf2 .1\cf0 );\
+        Padd_phi_unwrap = unwrap(angle(Padd(idx)));\
+        phi = polyfit(ph_cart_locs(idx),Padd_phi_unwrap\cf2 ',1);\cf0 \
+        phi_difference = polyval(phi,ph_cart_locs)/\cf2 2\cf0 ;\
+\
+%         Psum = \cf2 0.0\cf0 ;\
+%         a1 = \cf2 0.0\cf0 ;\
+%         \cf3 for\cf0  ind = \cf2 1\cf0 :length(Padd)\
+%             a2 = Padd(ind);\
+%             Psum = Psum + a1 .* conj(a2);\
+%             a1 = a2;\
+%         end\
+%         Psum = Psum/abs(Psum);\
+%         phi(\cf2 1\cf0 ) = -angle(Psum);\
+%         P0 = sum(Padd);\
+%         P0 = P0./abs(P0);\
+%         phi(\cf2 2\cf0 ) = angle(P0);\
+%         phi_difference = polyval(phi,\cf2 1\cf0 :length(ph_cart_locs))/\cf2 2\cf0 ;\
+\
+        \
+        temp1 = exp(\cf2 1\cf0 i*phi_difference)\cf2 ' .* P1 .* conj(P2);\cf0 \
+        temp2 = exp(\cf2 1\cf0 i*phi_difference)\cf2 ' .* P1 .* conj(P2);\cf0 \
+        thresh1 = abs(angle(mean(temp1)));\
+        thresh2 = abs(angle(mean(temp2)));\
+        \
+        \cf3 if\cf0  thresh1 > \cf2 .5\cf0 *pi && thresh2 > \cf2 .5\cf0 *pi\
+            phi_difference = polyval(phi,cart_locs)/\cf2 2\cf0  + pi;\
+%             phi_difference = polyval(phi,\cf2 1\cf0 :length(cart_locs))/\cf2 2\cf0  + pi;\
+        \cf3 else\cf0 \
+            phi_difference = polyval(phi,cart_locs)/\cf2 2\cf0 ;\
+%             phi_difference = polyval(phi,\cf2 1\cf0 :length(cart_locs))/\cf2 2\cf0 ;\
+        end\
+%         Psum = \cf2 0.0\cf0 ;\
+%         a1 = \cf2 0.0\cf0 ;\
+%         \cf3 for\cf0  ind = \cf2 1\cf0 :length(Padd)\
+%             a2 = Padd(ind);\
+%             Psum = Psum + a1 .* conj(a2);\
+%             a1 = a2;\
+%         end\
+%         Psum = Psum/abs(Psum);\
+%         phi(\cf2 1\cf0 ) = -angle(Psum);\
+%         P0 = sum(Padd);\
+%         P0 = P0./abs(P0);\
+%         phi(\cf2 2\cf0 ) = angle(P0);\
+%             \
+% %         phi(\cf2 2\cf0 ) = \cf2 0\cf0 ;\
+%         \
+%         phi_difference = polyval(phi,\cf2 1\cf0 :length(cart_locs))/\cf2 2\cf0 ;\
+%         phi = polyfit(idx,Padd_phi_unwrap,\cf2 1\cf0 );\
+%         Nlocs = \cf2 1\cf0 :s1;\
+%         phi_difference = polyval(phi,Nlocs)/\cf2 2\cf0 ;\
+        P2 = P2 ./ max(abs(P2));\
+        idx = find(abs(P2) > \cf2 .1\cf0 );\
+        P2_phi_unwrap = unwrap(angle(P2(idx)));\
+        posphi = polyfit(ph_cart_locs(idx),P2_phi_unwrap\cf2 ',1);\cf0 \
+%         posphi(\cf2 2\cf0 ) = \cf2 0\cf0 ;\
+        posphi_difference = polyval(posphi,cart_locs);\
+%         posphi = polyfit(idx,P2_phi_unwrap,\cf2 1\cf0 );\
+%         posphi = [\cf2 0\cf0  \cf2 0\cf0 ];\
+%         posphi_difference = -polyval(posphi,Nlocs);\
+        Pneg = exp(\cf2 1\cf0 i*(phi_difference + posphi_difference));\
+        Ppos = exp(\cf2 1\cf0 i*posphi_difference);\
+%         PCM = zeros(s2,length(cart_locs));\
+        PCM = zeros(s2,length(cart_locs));\
+        PCM(\cf2 1\cf0 :\cf2 2\cf0 :end,:) = repmat(Ppos,s2_odd,\cf2 1\cf0 );\
+        PCM(\cf2 2\cf0 :\cf2 2\cf0 :end,:) = repmat(Pneg,s2_even,\cf2 1\cf0 );\
+%             PCM = repmat(Pneg,size(phc,\cf2 2\cf0 ),\cf2 1\cf0 );\
+    \cf3 else\cf0 \
+        q = phc;\
+        b_odd = q(:,\cf2 1\cf0 :\cf2 2\cf0 :Nepi-\cf2 1\cf0 );\
+        b_even = q(:,\cf2 2\cf0 :\cf2 2\cf0 :Nepi);\
+        c = b_odd.*conj(b_even);\
+        c = c./abs(c);\
+        c(isnan(c)) = \cf2 0\cf0 ;\
+        c(isinf(c)) = \cf2 0\cf0 ;\
+        d = sum(c,\cf2 2\cf0 )/size(c,\cf2 2\cf0 );\
+        d = d./max(abs(d));\
+\
+        idx = find(abs(d) > \cf2 .1\cf0 );\
+        center_length = length(d)/\cf2 4\cf0 ;\
+        take_center = floor(length(d)/\cf2 2\cf0 )+\cf2 1\cf0 ;\
+        start_left = take_center - floor(center_length/\cf2 2\cf0 );\
+        end_right = take_center + floor(center_length/\cf2 2\cf0 )-\cf2 1\cf0 ;\
+        idx = start_left:end_right;\
+        e = d*\cf2 0\cf0 ;\
+        e(idx) = d(idx);\
+        \
+        E = ifftshift(fft(fftshift(e)));\
+        y2 = find(abs(E) == max(abs(E)));\
+        x1 = abs(E(y2-\cf2 1\cf0 ));\
+        x2 = abs(E(y2));\
+        x3 = abs(E(y2+\cf2 1\cf0 ));\
+        \cf3 if\cf0  x2 ~= \cf2 0.0\cf0 \
+            shift = (y2-(size(E,\cf2 1\cf0 )/\cf2 2\cf0  + \cf2 1\cf0 )) + \cf2 .5\cf0 *(x1-x3)/(x1+x3-\cf2 2\cf0 *x2);\
+        \cf3 else\cf0 \
+            shift = \cf2 0.0\cf0 ;\
+        end\
+%         f = polyfit(idx,unwrap(angle(e(idx))),\cf2 1\cf0 );\
+%         g = polyval(f,\cf2 1\cf0 :Nseg*effWidth);\
+        f = polyfit(ph_cart_locs(idx),unwrap(angle(e(idx)))\cf2 ',1);\cf0 \
+        \
+        f(\cf2 1\cf0 ) = shift * \cf2 2\cf0  * pi;\
+        f(\cf2 2\cf0 ) = mean(unwrap(angle(e(idx))));\
+\
+        g = polyval(f,ph_cart_locs);\
+\
+\
+        h = exp(\cf2 1\cf0 i*g);\
+        h1 = repmat(h\cf2 ',1,size(c,2));\cf0 \
+\
+%         \cf3 if\cf0  kflag == \cf2 3\cf0 \
+%             f(\cf2 1\cf0 ) = \cf2 7.4887\cf0 ;\
+%             f(\cf2 2\cf0 ) = -\cf2 0.4688\cf0 ;\
+%         end\
+        \
+        c1 = b_odd.*h1.*conj(b_even);\
+        c1 = c1./abs(c1);\
+        c1(isnan(c1)) = \cf2 0\cf0 ;\
+        c1(isinf(c1)) = \cf2 0\cf0 ;\
+        d1 = c*\cf2 0\cf0 ;\
+        d1(idx,:) = c1(idx,:);\
+        C1 = ifftshift(fft(fftshift(c1,\cf2 1\cf0 ),[],\cf2 1\cf0 ),\cf2 1\cf0 );\
+        D1 = ifftshift(fft(fftshift(d1,\cf2 1\cf0 ),[],\cf2 1\cf0 ),\cf2 1\cf0 );\
+        \cf3 for\cf0  index = \cf2 1\cf0 :size(c,\cf2 2\cf0 )\
+            y2(index) = find(abs(D1(:,index)) == max(abs(D1(:,index))));\
+            \cf3 if\cf0 (y2(index) > \cf2 1\cf0  && y2(index) < size(D1,\cf2 1\cf0 ))\
+            x1(index) = abs(D1(y2(index)-\cf2 1\cf0 ,index));\
+            x2(index) = abs(D1(y2(index),index));\
+            x3(index) = abs(D1(y2(index)+\cf2 1\cf0 ,index));\
+            shift1(index) = (y2(index) - (size(D1,\cf2 1\cf0 )/\cf2 2\cf0  + \cf2 1\cf0 )) + \cf2 .5\cf0 *(x1(index)-x3(index))/(x1(index)+x3(index)-\cf2 2\cf0 *x2(index));\
+            \cf3 else\cf0 \
+                shift1(index) = \cf2 0.\cf0 ;\
+            end\
+            f1(\cf2 1\cf0 ,index) = (shift+shift1(index))*\cf2 2\cf0 *pi;\
+            f1(\cf2 2\cf0 ,index) = mean(unwrap(angle(d1(idx,index))));\
+            f1(\cf2 2\cf0 ,index) = f(\cf2 2\cf0 );\
+            f1(\cf2 1\cf0 ,index) = shift*\cf2 2\cf0 *pi;\
+\
+%             g1(index,:) = polyval(f1(:,index),\cf2 1\cf0 :length(cart_locs));\
+            g1(index,:) = polyval(f1(:,index),cart_locs);\
+            g2(:,index) = g1(index,:);\
+        end\
+\
+%         h2 = exp(\cf2 1\cf0 i*g2);\
+%         c2 = b_odd.*conj(h2).*conj(b_even);\
+%         c2 = c2./abs(c2);\
+%         c2(isnan(c2)) = \cf2 0\cf0 ;\
+%         c2(isinf(c2)) = \cf2 0\cf0 ;\
+%         f1(\cf2 2\cf0 ,:) = -mean(angle(c2));\
+%         g1(index,:) = polyval(f1(:,index),cart_locs);\
+%         \
+\
+%         g1 = polyval(f,cart_locs);\
+%         h1 = repmat(exp(\cf2 1\cf0 i*g1),size(c,\cf2 2\cf0 ),\cf2 1\cf0 );\
+          h1 = exp(\cf2 1\cf0 i*g1);\
+        \
+%         PCM = h1;\
+        PCM(\cf2 1\cf0 :\cf2 2\cf0 :end,:) = ones(size(PCM(\cf2 1\cf0 :\cf2 2\cf0 :end,:)));\
+        PCM(\cf2 2\cf0 :\cf2 2\cf0 :end,:) = h1;\
+    end\
+end}
